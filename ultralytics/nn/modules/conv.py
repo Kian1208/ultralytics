@@ -21,6 +21,7 @@ __all__ = (
     "CBAM",
     "Concat",
     "RepConv",
+    "SSF", # Added
 )
 
 
@@ -47,11 +48,18 @@ class Conv(nn.Module):
 
     def forward(self, x):
         """Apply convolution, batch normalization and activation to input tensor."""
-        return self.act(self.bn(self.conv(x)))
+
+        x = self.act(self.bn(self.conv(x)))
+
+        return x
 
     def forward_fuse(self, x):
-        """Perform transposed convolution of 2D data."""
+        """Perform transposed convolution of 2D data."""   
+
         return self.act(self.conv(x))
+
+        
+
 
 
 class Conv2(Conv):
@@ -273,6 +281,61 @@ class RepConv(nn.Module):
             self.__delattr__("bn")
         if hasattr(self, "id_tensor"):
             self.__delattr__("id_tensor")
+
+
+
+# Added -----------------------------------------------------------------------------------------------------------------------
+
+class SSF(nn.Module):
+    """SSF operation with args(ch_in, ch_out)."""
+    # default_act = nn.SiLU()  # default activation
+
+    # def __init__(self, input, output, k=1):
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super(SSF, self).__init__()
+        # self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
+        #self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(c2)
+
+        # Set requires_grad to True for scale and shift parameters
+        self.ssf_scale_1.requires_grad = True
+        self.ssf_shift_1.requires_grad = True
+        # self.ssf_scale_2.requires_grad = True
+        # self.ssf_shift_2.requires_grad = True
+
+
+    def forward(self, x):
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
+        return x #self.act(x)
+
+
+def init_ssf_scale_shift(c1):
+    scale = nn.Parameter(torch.ones(c1))
+    shift = nn.Parameter(torch.zeros(c1))
+
+    nn.init.normal_(scale, mean=1, std=.02)
+    nn.init.normal_(shift, std=.02)
+
+    return scale, shift
+
+
+def ssf_ada(x, scale, shift):
+        # Get the number of channels (C) in the scale parameter
+        num_ch = scale.shape[0]
+
+        #assert scale.shape == shift.shape
+        if x.shape[-1] == scale.shape[0]:
+            return x * scale + shift
+        elif x.shape[1] == scale.shape[0]:
+            # return x * scale.view(1, num_ch, 1, 1) + shift.view(1, num_ch, 1, 1)
+            return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
+        else:
+            raise ValueError('the input tensor shape does not match the shape of the scale factor.')
+        
+
+# Added -----------------------------------------------------------------------------------------------------------------------
+
 
 
 class ChannelAttention(nn.Module):
