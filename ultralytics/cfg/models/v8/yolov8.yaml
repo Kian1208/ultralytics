@@ -71,7 +71,7 @@ head:
   - [-1, 1, SSF, [1024]] 
 
   # - [[15, 18, 21], 1, Detect, [nc]] # Detect(P3, P4, P5)
-  - [[25, 30, 33], 1, Detect, [nc]] # Detect(P3, P4, P5)
+  - [[25, 30, 35], 1, Detect, [nc]] # Detect(P3, P4, P5)
 
 
 
