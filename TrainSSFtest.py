@@ -176,94 +176,94 @@ from PIL import Image
 
 
 # ------------ SELECT PRE-TRAINED MODEL ------------
-pretrained_model = YOLO('SteStu_hitUAV_50e.pt')
+# pretrained_model = YOLO('SteStu_hitUAV_50e.pt')
 # pretrained_model = YOLO('yolov8n.pt')
 modified_model = YOLO('yolov8n.yaml') 
 
 
 
-def load_pretrained_params_by_size(pretrained_model, modified_model):
-    # Get the state dictionaries of the models
-    pretrained_state_dict = pretrained_model.state_dict()
-    modified_state_dict = modified_model.state_dict()
+# def load_pretrained_params_by_size(pretrained_model, modified_model):
+#     # Get the state dictionaries of the models
+#     pretrained_state_dict = pretrained_model.state_dict()
+#     modified_state_dict = modified_model.state_dict()
 
-    # Create a new state dictionary for the modified model
-    new_state_dict = {}
+#     # Create a new state dictionary for the modified model
+#     new_state_dict = {}
 
-    # Iterate through the parameters of the modified model
-    for modified_name, modified_param in modified_state_dict.items():
-        # Skip loading into specific layers (e.g., layers named 'ssf')
-        if 'ssf' in modified_name:
-            print(f"Skipping loading pretrained parameter into '{modified_name}'")
-            continue
+#     # Iterate through the parameters of the modified model
+#     for modified_name, modified_param in modified_state_dict.items():
+#         # Skip loading into specific layers (e.g., layers named 'ssf')
+#         if 'ssf' in modified_name:
+#             print(f"Skipping loading pretrained parameter into '{modified_name}'")
+#             continue
         
-        # Try to find a compatible pretrained parameter by size
-        found_match = False
-        for pretrained_name, pretrained_param in pretrained_state_dict.items():
-            if pretrained_param.shape == modified_param.shape:
-                new_state_dict[modified_name] = pretrained_param
-                print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
-                found_match = True
-                break
+#         # Try to find a compatible pretrained parameter by size
+#         found_match = False
+#         for pretrained_name, pretrained_param in pretrained_state_dict.items():
+#             if pretrained_param.shape == modified_param.shape:
+#                 new_state_dict[modified_name] = pretrained_param
+#                 print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
+#                 found_match = True
+#                 break
         
-        if not found_match:
-            print(f"No compatible pretrained parameter found for '{modified_name}'")
+#         if not found_match:
+#             print(f"No compatible pretrained parameter found for '{modified_name}'")
 
-    # Load the new state dictionary into the modified model
-    modified_model.load_state_dict(new_state_dict, strict=False)
-    return modified_model
-
-
-
-def freeze_model_except_ssf(modified_model):
-    # Iterate through the parameters of the modified model
-    for name, param in modified_model.named_parameters():
-        # Check if the parameter belongs to a layer containing 'ssf'
-        if 'ssf' in name:
-            # Unfreeze parameters in layers containing 'ssf'
-            param.requires_grad = True
-            print(f"Unfreezing parameter: {name}")
-        else:
-            # Freeze parameters in other layers
-            param.requires_grad = False
-            print(f"Freezing parameter: {name}")
-
-    return modified_model  # Return the modified model after freezing
+#     # Load the new state dictionary into the modified model
+#     modified_model.load_state_dict(new_state_dict, strict=False)
+#     return modified_model
 
 
 
-# Load pretrained parameters into the modified model based on size compatibility
-modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
+# def freeze_model_except_ssf(modified_model):
+#     # Iterate through the parameters of the modified model
+#     for name, param in modified_model.named_parameters():
+#         # Check if the parameter belongs to a layer containing 'ssf'
+#         if 'ssf' in name:
+#             # Unfreeze parameters in layers containing 'ssf'
+#             param.requires_grad = True
+#             print(f"Unfreezing parameter: {name}")
+#         else:
+#             # Freeze parameters in other layers
+#             param.requires_grad = False
+#             print(f"Freezing parameter: {name}")
 
-# Freeze all weights except for parameters in 'ssf' layers
-modified_model = freeze_model_except_ssf(modified_model)
-
-
-# Now you can use the modified_model for further training or evaluation
-
-
-# Assuming modified_model is your PyTorch model that you want to save
-torch.save(modified_model, '/Users/Kian/Documents/VU AI/Thesis/Models/SSF_model/modifiedModel/modified_model.pt')
-# Now upload 'modified_model.pth' to Google Colab
-
-
-
-print('====================')
-
-# print('--------Start Training--------')
+#     return modified_model  # Return the modified model after freezing
 
 
 
-# Train the model
-modified_trained = modified_model.train(
-   data='/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/dataset.yaml',
-   imgsz=512,
-   epochs=1,
-   batch=16,
-   name='modified_trained'
-)
+# # Load pretrained parameters into the modified model based on size compatibility
+# modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
 
-print(modified_model)
+# # Freeze all weights except for parameters in 'ssf' layers
+# modified_model = freeze_model_except_ssf(modified_model)
+
+
+# # Now you can use the modified_model for further training or evaluation
+
+
+# # Assuming modified_model is your PyTorch model that you want to save
+# torch.save(modified_model, '/Users/Kian/Documents/VU AI/Thesis/Models/SSF_model/modifiedModel/modified_model.pt')
+# # Now upload 'modified_model.pth' to Google Colab
+
+
+
+# print('====================')
+
+# # print('--------Start Training--------')
+
+
+
+# # Train the model
+# modified_trained = modified_model.train(
+#    data='/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/dataset.yaml',
+#    imgsz=512,
+#    epochs=1,
+#    batch=16,
+#    name='modified_trained'
+# )
+
+# print(modified_model)
 
 print('--------Done Training--------')
 

@@ -9,7 +9,7 @@ import torch.nn as nn
 
 __all__ = (
     "Conv",
-    "Conv2",
+    "Conv",
     "LightConv",
     "DWConv",
     "DWConvTranspose2d",
@@ -34,6 +34,8 @@ def autopad(k, p=None, d=1):  # kernel, padding, dilation
     return p
 
 
+# Added -----------------------------------------------------------------------------------------------------------------------
+
 class Conv(nn.Module):
     """Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)."""
 
@@ -46,11 +48,15 @@ class Conv(nn.Module):
         self.bn = nn.BatchNorm2d(c2)
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
+
     def forward(self, x):
         """Apply convolution, batch normalization and activation to input tensor."""
 
-        x = self.act(self.bn(self.conv(x)))
-
+        x = self.conv(x)
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
+        x = self.act(self.act(self.bn(x)))
+        
         return x
 
     def forward_fuse(self, x):
@@ -58,16 +64,43 @@ class Conv(nn.Module):
 
         return self.act(self.conv(x))
 
+
+
+#     # Added ------------------------------------------------------------------------------------
+def init_ssf_scale_shift(c1):
+    scale = nn.Parameter(torch.ones(c1))
+    shift = nn.Parameter(torch.zeros(c1))
+
+    nn.init.normal_(scale, mean=1, std=.02)
+    nn.init.normal_(shift, std=.02)
+
+    return scale, shift
+
+
+def ssf_ada(x, scale, shift):
+    # Get the number of channels (C) in the scale parameter
+    # num_ch = scale.shape[0]
+
+    assert scale.shape == shift.shape
+    if x.shape[-1] == scale.shape[0]:
+        return x * scale + shift
+    elif x.shape[1] == scale.shape[0]:
+            # return x * scale.view(1, num_ch, 1, 1) + shift.view(1, num_ch, 1, 1)
+        return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
+    else:
+        raise ValueError('the input tensor shape does not match the shape of the scale factor.')
+    # Added ------------------------------------------------------------------------------------
         
+# Added -----------------------------------------------------------------------------------------------------------------------
 
 
 
-class Conv2(Conv):
+class Conv(Conv):
     """Simplified RepConv module with Conv fusing."""
 
     def __init__(self, c1, c2, k=3, s=1, p=None, g=1, d=1, act=True):
         """Initialize Conv layer with given arguments including activation."""
-        super().__init__(c1, c2, k, s, p, g=g, d=d, act=act)
+        super().__init__(c1, c2, k, s, p, g=g, d=d, act=act)    
         self.cv2 = nn.Conv2d(c1, c2, 1, s, autopad(1, p, d), groups=g, dilation=d, bias=False)  # add 1x1 conv
 
     def forward(self, x):
@@ -131,7 +164,7 @@ class ConvTranspose(nn.Module):
         """Initialize ConvTranspose2d layer with batch normalization and activation function."""
         super().__init__()
         self.conv_transpose = nn.ConvTranspose2d(c1, c2, k, s, p, bias=not bn)
-        self.bn = nn.BatchNorm2d(c2) if bn else nn.Identity()
+        self.bn = nn.BatchNorm2d(c2) if bn else nn.Identity() 
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
     def forward(self, x):
@@ -284,67 +317,6 @@ class RepConv(nn.Module):
 
 
 
-# Added -----------------------------------------------------------------------------------------------------------------------
-
-class SSF(nn.Module):
-    """SSF operation with args(ch_in, ch_out)."""
-    # default_act = nn.SiLU()  # default activation
-
-    # def __init__(self, input, output, k=1):
-    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
-        super().__init__()
-        # self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
-
-        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
-        #self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(c2)
-
-        # Set requires_grad to True for scale and shift parameters
-        self.ssf_scale_1.requires_grad = True
-        self.ssf_shift_1.requires_grad = True
-        # self.ssf_scale_2.requires_grad = True
-        # self.ssf_shift_2.requires_grad = True
-
-        self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
-        self.bn = nn.BatchNorm2d(c2)
-        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
-
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
-        x = self.act(self.bn(x))
-
-        return x 
-
-
-def init_ssf_scale_shift(c1):
-    scale = nn.Parameter(torch.ones(c1))
-    shift = nn.Parameter(torch.zeros(c1))
-
-    nn.init.normal_(scale, mean=1, std=.02)
-    nn.init.normal_(shift, std=.02)
-
-    return scale, shift
-
-
-def ssf_ada(x, scale, shift):
-        # Get the number of channels (C) in the scale parameter
-        # num_ch = scale.shape[0]
-
-        assert scale.shape == shift.shape
-        if x.shape[-1] == scale.shape[0]:
-            return x * scale + shift
-        elif x.shape[1] == scale.shape[0]:
-            # return x * scale.view(1, num_ch, 1, 1) + shift.view(1, num_ch, 1, 1)
-            return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
-        else:
-            raise ValueError('the input tensor shape does not match the shape of the scale factor.')
- 
-
-# Added -----------------------------------------------------------------------------------------------------------------------
-
-
-
 class ChannelAttention(nn.Module):
     """Channel-attention module https://github.com/open-mmlab/mmdetection/tree/v3.0.0rc1/configs/rtmdet."""
 
@@ -401,3 +373,59 @@ class Concat(nn.Module):
     def forward(self, x):
         """Forward pass for the YOLOv8 mask Proto module."""
         return torch.cat(x, self.d)
+
+
+
+# Added -----------------------------------------------------------------------------------------------------------------------
+
+# class SSF(nn.Module):
+#     """SSF operation with args(ch_in, ch_out)."""
+#     # default_act = nn.SiLU()  # default activation
+
+#     # def __init__(self, input, output, k=1):
+#     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+#         super(SSF, self).__init__()
+#         # self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+#         self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
+#         #self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(c2)
+
+#         # Set requires_grad to True for scale and shift parameters
+#         self.ssf_scale_1.requires_grad = True
+#         self.ssf_shift_1.requires_grad = True
+#         # self.ssf_scale_2.requires_grad = True
+#         # self.ssf_shift_2.requires_grad = True
+
+
+#     def forward(self, x):
+#         x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
+#         return x #self.act(x)
+
+
+# def init_ssf_scale_shift(c1):
+#     scale = nn.Parameter(torch.ones(c1))
+#     shift = nn.Parameter(torch.zeros(c1))
+
+#     nn.init.normal_(scale, mean=1, std=.02)
+#     nn.init.normal_(shift, std=.02)
+
+#     return scale, shift
+
+
+# def ssf_ada(x, scale, shift):
+#         # Get the number of channels (C) in the scale parameter
+#         # num_ch = scale.shape[0]
+
+#         assert scale.shape == shift.shape
+#         if x.shape[-1] == scale.shape[0]:
+#             return x * scale + shift
+#         elif x.shape[1] == scale.shape[0]:
+#             # return x * scale.view(1, num_ch, 1, 1) + shift.view(1, num_ch, 1, 1)
+#             return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
+#         else:
+#             raise ValueError('the input tensor shape does not match the shape of the scale factor.')
+        
+
+
+# Added -----------------------------------------------------------------------------------------------------------------------
+
