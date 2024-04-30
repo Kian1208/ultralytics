@@ -49,8 +49,8 @@ class Conv(nn.Module):
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
         self.ssf = SSF(c1, c2)
-
-        # self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
+        self.ssf_scale_1 = self.ssf.ssf_scale_1
+        self.ssf_shift_1 = self.ssf.ssf_shift_1
 
         # Freeze convolutional layer
         self.conv.requires_grad = False
@@ -64,7 +64,7 @@ class Conv(nn.Module):
         """Apply convolution, batch normalization and activation to input tensor."""
 
         x = self.conv(x)
-        x = self.ssf(x)
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
         # x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
         x = self.act(self.bn(x))
         
