@@ -49,8 +49,13 @@ class Conv(nn.Module):
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
         self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
+
+        # Freeze convolutional layer
+        self.conv.requires_grad = False
+
         self.ssf_scale_1.requires_grad = True
         self.ssf_shift_1.requires_grad = True
+
 
 
     def forward(self, x):
