@@ -52,12 +52,12 @@ class Conv(nn.Module):
 
         # self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c1)
 
-        # # Freeze convolutional layer
-        # self.conv.requires_grad = False
-        # print('Conv layer frozen within conv module')
-        # self.ssf_scale_1.requires_grad = True
-        # self.ssf_shift_1.requires_grad = True
-        # print('SSF layer unfrozen within conv module')
+        # Freeze convolutional layer
+        self.conv.requires_grad = False
+        print('Conv layer frozen within conv module')
+        self.ssf_scale_1.requires_grad = True
+        self.ssf_shift_1.requires_grad = True
+        print('SSF layer unfrozen within conv module')
 
 
     def forward(self, x):
