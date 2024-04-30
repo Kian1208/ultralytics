@@ -47,7 +47,7 @@ from .block import (
     ResNetLayer,
     Silence,
 )
-from .conv import (
+from .V1conv import (
     CBAM,
     ChannelAttention,
     Concat,
