@@ -322,9 +322,9 @@ def init_ssf_scale_shift(c1):
 
 def ssf_ada(x, scale, shift):
         # Get the number of channels (C) in the scale parameter
-        num_ch = scale.shape[0]
+        # num_ch = scale.shape[0]
 
-        #assert scale.shape == shift.shape
+        assert scale.shape == shift.shape
         if x.shape[-1] == scale.shape[0]:
             return x * scale + shift
         elif x.shape[1] == scale.shape[0]:
@@ -333,6 +333,7 @@ def ssf_ada(x, scale, shift):
         else:
             raise ValueError('the input tensor shape does not match the shape of the scale factor.')
         
+
 
 # Added -----------------------------------------------------------------------------------------------------------------------
 
