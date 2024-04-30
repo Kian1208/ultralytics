@@ -1,4 +1,5 @@
-from ultralytics import YOLO
+# from ultralytics import YOLO
+from ultralytics.models.yolo.model import YOLO
 import torch
 
 # Data preprocessing
@@ -177,41 +178,43 @@ from PIL import Image
 
 # ------------ SELECT PRE-TRAINED MODEL ------------
 # pretrained_model = YOLO('SteStu_hitUAV_50e.pt')
-# pretrained_model = YOLO('yolov8n.pt')
+
+pretrained_model = YOLO('yolov8n.pt')
 modified_model = YOLO('yolov8n.yaml') 
 
 
 
-# def load_pretrained_params_by_size(pretrained_model, modified_model):
-#     # Get the state dictionaries of the models
-#     pretrained_state_dict = pretrained_model.state_dict()
-#     modified_state_dict = modified_model.state_dict()
+def load_pretrained_params_by_size(pretrained_model, modified_model):
+    # Get the state dictionaries of the models
+    pretrained_state_dict = pretrained_model.state_dict()
+    modified_state_dict = modified_model.state_dict()
 
-#     # Create a new state dictionary for the modified model
-#     new_state_dict = {}
+    # Create a new state dictionary for the modified model
+    new_state_dict = {}
 
-#     # Iterate through the parameters of the modified model
-#     for modified_name, modified_param in modified_state_dict.items():
-#         # Skip loading into specific layers (e.g., layers named 'ssf')
-#         if 'ssf' in modified_name:
-#             print(f"Skipping loading pretrained parameter into '{modified_name}'")
-#             continue
-        
-#         # Try to find a compatible pretrained parameter by size
-#         found_match = False
-#         for pretrained_name, pretrained_param in pretrained_state_dict.items():
-#             if pretrained_param.shape == modified_param.shape:
-#                 new_state_dict[modified_name] = pretrained_param
-#                 print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
-#                 found_match = True
-#                 break
-        
-#         if not found_match:
-#             print(f"No compatible pretrained parameter found for '{modified_name}'")
+    # Iterate through the parameters of the modified model
+    for modified_name, modified_param in modified_state_dict.items():
+        # Skip loading into specific layers (e.g., layers named 'ssf')
+        if 'ssf' in modified_name:
+            print(f"Skipping loading pretrained parameter into '{modified_name}'")
+            continue
 
-#     # Load the new state dictionary into the modified model
-#     modified_model.load_state_dict(new_state_dict, strict=False)
-#     return modified_model
+        # Try to find a compatible pretrained parameter by size
+        found_match = False
+        for pretrained_name, pretrained_param in pretrained_state_dict.items():
+            if pretrained_param.shape == modified_param.shape:
+                new_state_dict[modified_name] = pretrained_param
+                print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
+                found_match = True
+                # Remove the parameter from the pre-trained state dict
+                del pretrained_state_dict[pretrained_name]
+                break
+
+        if not found_match:
+            print(f"No compatible pretrained parameter found for '{modified_name}'")
+
+    modified_model.load_state_dict(new_state_dict, strict=False)
+    return modified_model
 
 
 
@@ -232,8 +235,8 @@ modified_model = YOLO('yolov8n.yaml')
 
 
 
-# # Load pretrained parameters into the modified model based on size compatibility
-# modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
+# Load pretrained parameters into the modified model based on size compatibility
+modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
 
 # # Freeze all weights except for parameters in 'ssf' layers
 # modified_model = freeze_model_except_ssf(modified_model)
@@ -268,6 +271,9 @@ modified_model = YOLO('yolov8n.yaml')
 print('--------Done Training--------')
 
 
+for name, param in modified_model.named_parameters():
+  # if 'ssf' in name:
+    print(name)
 
 # results = modified_trained(['/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/test/images/1_80_60_0_08686.jpg'])  # results list
 
