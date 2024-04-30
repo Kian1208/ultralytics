@@ -310,11 +310,7 @@ class SSF(nn.Module):
 
 
     def forward(self, x):
-        size = x.size()
-        print(size)
         x = self.conv(x)
-        size = x.size()
-        print(size)
         x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
         x = self.act(self.bn(x))
 
