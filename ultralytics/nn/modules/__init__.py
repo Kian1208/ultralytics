@@ -62,6 +62,10 @@ from .conv import (
     RepConv,
     SpatialAttention,
     SSF, #Added
+    convFirst, #Added
+    SSFonly, #Added
+    convScnd, #Added
+
 )
 from .head import OBB, Classify, Detect, Pose, RTDETRDecoder, Segment, WorldDetect
 from .transformer import (
@@ -137,4 +141,7 @@ __all__ = (
     "CBLinear",
     "Silence",
     "SSF", #Added
+    "convFirst", #Added
+    "SSFonly", #Added
+    "convScnd", #Added
 )

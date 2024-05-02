@@ -196,7 +196,7 @@ def load_pretrained_params_by_size(pretrained_model, modified_model):
     for modified_name, modified_param in modified_state_dict.items():
         # Skip loading into specific layers (e.g., layers named 'ssf')
         if 'ssf' in modified_name:
-            print(f"Skipping loading pretrained parameter into '{modified_name}'")
+            # print(f"Skipping loading pretrained parameter into '{modified_name}'")
             continue
 
         # Try to find a compatible pretrained parameter by size
@@ -204,14 +204,14 @@ def load_pretrained_params_by_size(pretrained_model, modified_model):
         for pretrained_name, pretrained_param in pretrained_state_dict.items():
             if pretrained_param.shape == modified_param.shape:
                 new_state_dict[modified_name] = pretrained_param
-                print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
+                # print(f"Loaded pretrained parameter into '{modified_name}' based on size match")
                 found_match = True
                 # Remove the parameter from the pre-trained state dict
                 del pretrained_state_dict[pretrained_name]
                 break
 
-        if not found_match:
-            print(f"No compatible pretrained parameter found for '{modified_name}'")
+        # if not found_match:
+            # print(f"No compatible pretrained parameter found for '{modified_name}'")
 
     modified_model.load_state_dict(new_state_dict, strict=False)
     return modified_model
@@ -270,10 +270,14 @@ modified_model = load_pretrained_params_by_size(pretrained_model, modified_model
 
 print('--------Done Training--------')
 
-
+i = 0
 for name, param in modified_model.named_parameters():
   # if 'ssf' in name:
     print(name)
+    print(param)
+    i += 1
+    if i == 7:
+        break
 
 # results = modified_trained(['/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/test/images/1_80_60_0_08686.jpg'])  # results list
 

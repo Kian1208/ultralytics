@@ -22,6 +22,9 @@ __all__ = (
     "Concat",
     "RepConv",
     "SSF", # Added
+    "convFirst", #Added
+    "SSFonly", #Added
+    "convScnd", #Added
 )
 
 
@@ -293,21 +296,17 @@ class SSF(nn.Module):
     # def __init__(self, input, output, k=1):
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
         super().__init__()
-        # self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
-
-        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c2)
-        #self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(c2)
-
-        # Set requires_grad to True for scale and shift parameters
-        self.ssf_scale_1.requires_grad = True
-        self.ssf_shift_1.requires_grad = True
-        # self.ssf_scale_2.requires_grad = True
-        # self.ssf_shift_2.requires_grad = True
+        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c2)
+
+        # Set requires_grad to True for scale and shift parameters
+        self.ssf_scale_1.requires_grad = True
+        self.ssf_shift_1.requires_grad = True
 
     def forward(self, x):
         x = self.conv(x)
@@ -328,9 +327,7 @@ def init_ssf_scale_shift(c1):
 
 
 def ssf_ada(x, scale, shift):
-        # Get the number of channels (C) in the scale parameter
-        # num_ch = scale.shape[0]
-
+        
         assert scale.shape == shift.shape
         if x.shape[-1] == scale.shape[0]:
             return x * scale + shift
@@ -339,6 +336,53 @@ def ssf_ada(x, scale, shift):
             return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
         else:
             raise ValueError('the input tensor shape does not match the shape of the scale factor.')
+
+
+
+
+class convFirst(nn.Module):
+    """First half of conv block operation with args(ch_in, ch_out), where SSF goes in between."""
+
+    # def __init__(self, input, output, k=1):
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
+
+    def forward(self, x):
+        x = self.conv(x)
+
+        return x 
+
+class SSFonly(nn.Module):
+    """SSF only operation with args(ch_in, ch_out), goes in between first and second conv."""
+
+    # def __init__(self, input, output, k=1):
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(c2)
+
+        # Set requires_grad to True for scale and shift parameters
+        self.ssf_scale_1.requires_grad = True
+        self.ssf_shift_1.requires_grad = True
+
+    def forward(self, x):
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
+
+        return x 
+
+class convScnd(nn.Module):
+    """Second half of conv block operation with args(ch_in, ch_out), where SSF goes in between."""
+
+    # def __init__(self, input, output, k=1):
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+    def forward(self, x):
+        x = self.act(self.bn(x))
+
+        return x 
  
 
 # Added -----------------------------------------------------------------------------------------------------------------------
@@ -401,6 +445,14 @@ class Concat(nn.Module):
     def forward(self, x):
         """Forward pass for the YOLOv8 mask Proto module."""
         return torch.cat(x, self.d)
+
+
+
+
+
+
+
+
 
 
 

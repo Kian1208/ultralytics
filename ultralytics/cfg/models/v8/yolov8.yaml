@@ -164,36 +164,91 @@ scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call 
 
 
 
-# YOLOv8.0n backbone
+# # YOLOv8.0n backbone
+# backbone:
+#   # [from, repeats, module, args]
+#   - [-1, 1, SSF, [64, 3, 2]] # 0-P1/2
+#   - [-1, 1, SSF, [128, 3, 2]] # 1-P2/4
+#   - [-1, 3, C2f, [128, True]] #2
+#   - [-1, 1, SSF, [256, 3, 2]] # 3-P3/8
+#   - [-1, 6, C2f, [256, True]] # 4
+#   - [-1, 1, SSF, [512, 3, 2]] # 5-P4/16
+#   - [-1, 6, C2f, [512, True]] # 6
+#   - [-1, 1, SSF, [1024, 3, 2]] # 7-P5/32
+#   - [-1, 3, C2f, [1024, True]] # 8
+#   - [-1, 1, SPPF, [1024, 5]] # 9
+
+# # YOLOv8.0n head
+# head:
+#   - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 10
+#   - [[-1, 6], 1, Concat, [1]] # cat backbone P4 # 11
+#   - [-1, 3, C2f, [512]] # 12
+
+#   - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 13
+#   - [[-1, 4], 1, Concat, [1]] # cat backbone P3 # 14
+#   - [-1, 3, C2f, [256]] # 15 (P3/8-small) # 15
+
+#   - [-1, 1, Conv, [256, 3, 2]] # 16
+#   - [[-1, 12], 1, Concat, [1]] # cat head P4 # 17
+#   - [-1, 3, C2f, [512]] # 18 (P4/16-medium)
+
+#   - [-1, 1, Conv, [512, 3, 2]] # 19
+#   - [[-1, 9], 1, Concat, [1]] # cat head P5 # 20
+#   - [-1, 3, C2f, [1024]] # 21 (P5/32-large)
+
+#   - [[15, 18, 21], 1, Detect, [nc]] # Detect(P3, P4, P5)
+
+
+
+
+  # YOLOv8.0n backbone
 backbone:
   # [from, repeats, module, args]
-  - [-1, 1, SSF, [64, 3, 2]] # 0-P1/2
-  - [-1, 1, SSF, [128, 3, 2]] # 1-P2/4
+  - [-1, 1, convFirst, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, SSFonly, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, convScnd, [64, 3, 2]] # 0-P1/2
+
+  - [-1, 1, convFirst, [128, 3, 2]] # 1-P2/4
+  - [-1, 1, SSFonly, [128, 3, 2]] # 1-P2/4
+  - [-1, 1, convScnd, [128, 3, 2]] # 1-P2/4
+
   - [-1, 3, C2f, [128, True]] #2
-  - [-1, 1, SSF, [256, 3, 2]] # 3-P3/8
+
+  - [-1, 1, convFirst, [256, 3, 2]] # 3-P3/8
+  - [-1, 1, SSFonly, [256, 3, 2]] # 3-P3/8
+  - [-1, 1, convScnd, [256, 3, 2]] # 3-P3/8
+
   - [-1, 6, C2f, [256, True]] # 4
-  - [-1, 1, SSF, [512, 3, 2]] # 5-P4/16
+
+  - [-1, 1, convFirst, [512, 3, 2]] # 5-P4/16
+  - [-1, 1, SSFonly, [512, 3, 2]] # 5-P4/16
+  - [-1, 1, convScnd, [512, 3, 2]] # 5-P4/16
+
   - [-1, 6, C2f, [512, True]] # 6
-  - [-1, 1, SSF, [1024, 3, 2]] # 7-P5/32
+
+  - [-1, 1, convFirst, [1024, 3, 2]] # 7-P5/32
+  - [-1, 1, SSFonly, [1024, 3, 2]] # 7-P5/32
+  - [-1, 1, convScnd, [1024, 3, 2]] # 7-P5/32
+
   - [-1, 3, C2f, [1024, True]] # 8
   - [-1, 1, SPPF, [1024, 5]] # 9
 
 # YOLOv8.0n head
 head:
   - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 10
-  - [[-1, 6], 1, Concat, [1]] # cat backbone P4 # 11
+  - [[-1, 14], 1, Concat, [1]] # cat backbone P4 # 11
   - [-1, 3, C2f, [512]] # 12
 
   - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 13
-  - [[-1, 4], 1, Concat, [1]] # cat backbone P3 # 14
+  - [[-1, 10], 1, Concat, [1]] # cat backbone P3 # 14
   - [-1, 3, C2f, [256]] # 15 (P3/8-small) # 15
 
   - [-1, 1, Conv, [256, 3, 2]] # 16
-  - [[-1, 12], 1, Concat, [1]] # cat head P4 # 17
+  - [[-1, 22], 1, Concat, [1]] # cat head P4 # 17
   - [-1, 3, C2f, [512]] # 18 (P4/16-medium)
 
   - [-1, 1, Conv, [512, 3, 2]] # 19
-  - [[-1, 9], 1, Concat, [1]] # cat head P5 # 20
+  - [[-1, 19], 1, Concat, [1]] # cat head P5 # 20
   - [-1, 3, C2f, [1024]] # 21 (P5/32-large)
 
-  - [[15, 18, 21], 1, Detect, [nc]] # Detect(P3, P4, P5)
+  - [[25, 28, 31], 1, Detect, [nc]] # Detect(P3, P4, P5)
