@@ -274,10 +274,10 @@ i = 0
 for name, param in modified_model.named_parameters():
   # if 'ssf' in name:
     print(name)
-    print(param)
-    i += 1
-    if i == 7:
-        break
+    # print(param)
+    # i += 1
+    # if i == 7:
+    #     break
 
 # results = modified_trained(['/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/test/images/1_80_60_0_08686.jpg'])  # results list
 

@@ -372,7 +372,8 @@ class SSFonly(nn.Module):
 
 class convScnd(nn.Module):
     """Second half of conv block operation with args(ch_in, ch_out), where SSF goes in between."""
-
+    default_act = nn.SiLU()  # default activation
+    
     # def __init__(self, input, output, k=1):
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
         super().__init__()
