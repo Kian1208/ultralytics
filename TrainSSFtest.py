@@ -177,10 +177,20 @@ from PIL import Image
 
 
 # ------------ SELECT PRE-TRAINED MODEL ------------
-# pretrained_model = YOLO('SteStu_hitUAV_50e.pt')
+steStu_modelFine = YOLO('SteStu_hitUAV_50e.pt')
+steStu_model = YOLO('SteStuBest.pt')
 
 pretrained_model = YOLO('yolov8n.pt')
 modified_model = YOLO('yolov8n.yaml') 
+
+# print('========================== Model: steStu_model ==========================')
+# print(steStu_model)
+# print('========================== Next model: steStu_modelFine ==========================')
+# print(steStu_modelFine)
+# print('========================== Next model: pretrained_model ==========================')
+# print(pretrained_model)
+# print('========================== Next model: modified_model ==========================')
+# print(modified_model)
 
 
 
@@ -236,18 +246,13 @@ def load_pretrained_params_by_size(pretrained_model, modified_model):
 
 
 # Load pretrained parameters into the modified model based on size compatibility
-modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
+# modified_model = load_pretrained_params_by_size(pretrained_model, modified_model)
+modified_model = load_pretrained_params_by_size(steStu_model, modified_model)
 
 # # Freeze all weights except for parameters in 'ssf' layers
 # modified_model = freeze_model_except_ssf(modified_model)
 
 
-# # Now you can use the modified_model for further training or evaluation
-
-
-# # Assuming modified_model is your PyTorch model that you want to save
-# torch.save(modified_model, '/Users/Kian/Documents/VU AI/Thesis/Models/SSF_model/modifiedModel/modified_model.pt')
-# # Now upload 'modified_model.pth' to Google Colab
 
 
 
@@ -270,80 +275,6 @@ print(modified_model)
 
 print('--------Done Training--------')
 
-# i = 0
-# for name, param in modified_model.named_parameters():
-#   # if 'ssf' in name:
-#     print(name)
-    # print(param)
-    # i += 1
-    # if i == 7:
-    #     break
-
-# results = modified_trained(['/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/test/images/1_80_60_0_08686.jpg'])  # results list
-
-# # results = pretrained_model(['/Users/Kian/Documents/VU AI/Thesis/Ultralytics GitHub/ultralytics-main/hit-uav/test/images/1_80_60_0_08686.jpg'])  # results list
-
-
-# for result in results:
-#     boxes = result.boxes  # Boxes object for bounding box outputs
-#     masks = result.masks  # Masks object for segmentation masks outputs
-#     keypoints = result.keypoints  # Keypoints object for pose outputs
-#     probs = result.probs  # Probs object for classification outputs
-#     result.show()  # display to screen
-
-#     result.save(filename='testResult.jpg')  # save to disk
 
 
 
-
-
-
-# params = ['ssf',
-# 'model.37.cv2.0.0.conv.weight',
-# 'model.37.cv2.0.0.bn.bias',
-# 'model.37.cv2.0.1.conv.weight',
-# 'model.37.cv2.0.1.bn.weight',
-# 'model.37.cv2.0.1.bn.bias',
-# 'model.37.cv2.0.2.weight',
-# 'model.37.cv2.0.2.bias',
-# 'model.37.cv2.1.0.conv.weight ',
-# 'model.37.cv2.1.0.bn.weight',
-# 'model.37.cv2.1.0.bn.bias',
-# 'model.37.cv2.1.1.conv.weight',
-# 'model.37.cv2.1.1.bn.weight',
-# 'model.37.cv2.1.1.bn.bias',
-# 'model.37.cv2.1.2.weight',
-# 'model.37.cv2.1.2.bias ',
-# 'model.37.cv2.2.0.conv.weight',
-# 'model.37.cv2.2.0.bn.weight',
-# 'model.37.cv2.2.0.bn.bias',
-# 'model.37.cv2.2.1.conv.weight',
-# 'model.37.cv2.2.1.bn.weight',
-# 'model.37.cv2.2.1.bn.bias ',
-# 'model.37.cv2.2.2.weight',
-# 'model.37.cv2.2.2.bias',
-# 'model.37.cv3.0.0.conv.weight',
-# 'model.37.cv3.0.0.bn.weight',
-# 'model.37.cv3.0.0.bn.bias',
-# 'model.37.cv3.0.1.conv.weight',
-# 'model.37.cv3.0.1.bn.weight',
-# 'model.37.cv3.0.1.bn.bias',
-# 'model.37.cv3.0.2.weight',
-# 'model.37.cv3.0.2.bias',
-# 'model.37.cv3.1.0.conv.weight',
-# 'model.37.cv3.1.0.bn.weight',
-# 'model.37.cv3.1.0.bn.bias',
-# 'model.37.cv3.1.1.conv.weight',
-# 'model.37.cv3.1.1.bn.weight',
-# 'model.37.cv3.1.1.bn.bias',
-# 'model.37.cv3.1.2.weight',
-# 'model.37.cv3.1.2.bias',
-# 'model.37.cv3.2.0.conv.weight',
-# 'model.37.cv3.2.0.bn.weight',
-# 'model.37.cv3.2.0.bn.bias',
-# 'model.37.cv3.2.1.conv.weight',
-# 'model.37.cv3.2.1.bn.weight',
-# 'model.37.cv3.2.1.bn.bias',
-# 'model.37.cv3.2.2.weight',
-# 'model.37.cv3.2.2.bias',
-# 'model.37.dfl.conv.weight',]
